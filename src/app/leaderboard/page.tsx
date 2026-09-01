@@ -42,7 +42,7 @@ export default function LeaderboardPage() {
     <div className="flex-1 flex flex-col pt-12 pb-24 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-4xl font-black tracking-tighter">GLOBAL LEADERBOARD</h1>
-        <Button variant="outline" asChild>
+        <Button variant="outline">
           <Link href="/">Back</Link>
         </Button>
       </div>
