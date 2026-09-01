@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Precision - Daily Timing Game
 
-## Getting Started
+"How accurately can you measure time?"
 
-First, run the development server:
+Precision is a competitive daily mini-game where players attempt to tap as close to a target duration as possible over 5 rounds. 
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Features
+- **Daily Challenges**: 5 new target times every single day.
+- **Authoritative Scoring**: Uses a monotonic high-resolution client timer (`performance.now()`), but scores are verified and stored securely server-side.
+- **Global & Friends Leaderboard**: Compete with the world or just your friends.
+- **Daily Streak**: Keep coming back to build your consistency streak!
+- **Anti-Cheat**: Single attempt allowed per day; basic suspicious-result flagging based on timestamps.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Tech Stack
+- **Frontend**: Next.js 15+ (App Router), React, Tailwind CSS, shadcn/ui, Framer Motion
+- **Backend**: Next.js API Routes (RESTful design for future Android integration)
+- **Database**: PostgreSQL (Prisma ORM with `@prisma/adapter-pg`)
+- **Authentication**: Custom JWT in HTTP-Only cookies via `jose`
+- **Testing**: Vitest (Unit) & Playwright (E2E)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Local Setup
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **Install Dependencies**
+   ```bash
+   npm install
+   ```
 
-## Learn More
+2. **Database Setup**
+   You need a running PostgreSQL instance. Set your connection string in `.env`.
+   ```env
+   DATABASE_URL="postgres://postgres:postgres@localhost:5432/precision"
+   JWT_SECRET="your_secret_key"
+   ADMIN_USERNAME="admin"
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+3. **Migrate the Database**
+   ```bash
+   npx prisma migrate dev --name init
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+4. **Run the Development Server**
+   ```bash
+   npm run dev
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Admin
 
-## Deploy on Vercel
+To create a new daily challenge, log in with the username specified in `ADMIN_USERNAME`, then navigate to `/admin`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Android API Integration
+The backend is completely decoupled from the Next.js UI using standard REST/JSON responses. 
+Authentication is handled via standard POST requests returning HTTP-Only cookies.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Deployment (Vercel)
+1. Link the repository to Vercel.
+2. Provide `DATABASE_URL`, `JWT_SECRET`, and `ADMIN_USERNAME` in Vercel Environment Variables.
+3. The build command `npm run build` will automatically run type-checks and build the Next.js app.

@@ -1,0 +1,143 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id             String    @id @default(cuid())
+  username       String    @unique
+  email          String?   @unique
+  passwordHash   String
+  avatarUrl      String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  status         String    @default("ACTIVE") // ACTIVE, BANNED
+  
+  // Relations
+  sessions       Session[]
+  attempts       Attempt[]
+  streak         Streak?
+  achievements   UserAchievement[]
+  friendshipsReq Friendship[] @relation("Requester")
+  friendshipsRec Friendship[] @relation("Recipient")
+}
+
+model Session {
+  id        String   @id
+  userId    String
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Friendship {
+  id          String   @id @default(cuid())
+  requesterId String
+  recipientId String
+  status      String   @default("PENDING") // PENDING, ACCEPTED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  requester   User     @relation("Requester", fields: [requesterId], references: [id])
+  recipient   User     @relation("Recipient", fields: [recipientId], references: [id])
+
+  @@unique([requesterId, recipientId])
+}
+
+model DailyChallenge {
+  id            String    @id @default(cuid())
+  challengeDate DateTime  @unique @db.Date
+  status        String    @default("DRAFT") // DRAFT, PUBLISHED, ARCHIVED
+  version       Int       @default(1)
+  publishedAt   DateTime?
+  createdAt     DateTime  @default(now())
+
+  rounds        ChallengeRound[]
+  attempts      Attempt[]
+}
+
+model ChallengeRound {
+  id              String         @id @default(cuid())
+  challengeId     String
+  roundNumber     Int
+  targetMs        Int
+  
+  challenge       DailyChallenge @relation(fields: [challengeId], references: [id])
+  roundAttempts   RoundAttempt[]
+
+  @@unique([challengeId, roundNumber])
+}
+
+model Attempt {
+  id              String    @id @default(cuid())
+  userId          String
+  challengeId     String
+  mode            String    @default("COMPETITIVE") // COMPETITIVE, PRACTICE
+  status          String    @default("IN_PROGRESS") // IN_PROGRESS, COMPLETED
+  startedAt       DateTime  @default(now())
+  completedAt     DateTime?
+  totalScore      Int       @default(0)
+  totalErrorMs    Int       @default(0)
+  verified        Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+
+  user            User           @relation(fields: [userId], references: [id])
+  challenge       DailyChallenge @relation(fields: [challengeId], references: [id])
+  roundAttempts   RoundAttempt[]
+
+  @@unique([userId, challengeId, mode], name: "unique_competitive_attempt")
+}
+
+model RoundAttempt {
+  id                   String         @id @default(cuid())
+  attemptId            String
+  challengeRoundId     String
+  roundNumber          Int
+  clientStartTimestamp BigInt?
+  clientTapTimestamp   BigInt?
+  measuredMs           Int
+  errorMs              Int
+  score                Int
+  validationStatus     String         @default("PENDING") // PENDING, VERIFIED, SUSPICIOUS, REJECTED
+  createdAt            DateTime       @default(now())
+
+  attempt              Attempt        @relation(fields: [attemptId], references: [id])
+  challengeRound       ChallengeRound @relation(fields: [challengeRoundId], references: [id])
+
+  @@unique([attemptId, roundNumber])
+}
+
+model Streak {
+  userId             String   @id
+  currentStreak      Int      @default(0)
+  longestStreak      Int      @default(0)
+  lastCompletedDate  DateTime? @db.Date
+
+  user               User     @relation(fields: [userId], references: [id])
+}
+
+model Achievement {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  name        String
+  description String
+
+  users       UserAchievement[]
+}
+
+model UserAchievement {
+  userId        String
+  achievementId String
+  earnedAt      DateTime @default(now())
+
+  user          User        @relation(fields: [userId], references: [id])
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+
+  @@id([userId, achievementId])
+}
