@@ -17,6 +17,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Precision",
   description: "How accurately can you measure time?",
+  icons: {
+    icon: "/precision-logo.png",
+    shortcut: "/precision-logo.png",
+    apple: "/precision-logo.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
