@@ -8,6 +8,7 @@ interface User {
   username: string;
   avatarUrl: string | null;
   role: string;
+  isAdmin: boolean;
   createdAt: string;
   streak: { currentStreak: number; longestStreak: number } | null;
 }

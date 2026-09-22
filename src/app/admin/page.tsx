@@ -14,7 +14,7 @@ import { motion } from "framer-motion";
 type AdminUser = { id: string; username: string; status: string; role: string; createdAt: string; streak: { currentStreak: number; longestStreak: number } | null };
 
 export default function AdminPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [date, setDate] = useState("");
   const [rounds, setRounds] = useState<string[]>(["1570", "3280", "840", "4610", "2350"]);
   const [loading, setLoading] = useState(false);
@@ -28,15 +28,17 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
+    if (authLoading || !user?.isAdmin) return;
     const timer = window.setTimeout(() => { void loadUsers(); }, 0);
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [authLoading, user?.isAdmin]);
 
   const activeUsers = users.filter((managedUser) => managedUser.status === "ACTIVE").length;
   const adminCount = users.filter((managedUser) => managedUser.role === "ADMIN").length;
   const totalStreaks = users.reduce((total, managedUser) => total + (managedUser.streak?.currentStreak ?? 0), 0);
 
-  if (!user) return <div className="p-8">Unauthorized</div>;
+  if (authLoading) return <div className="flex min-h-screen items-center justify-center text-muted-foreground">Checking admin access...</div>;
+  if (!user || !user.isAdmin) return <div className="flex min-h-screen items-center justify-center p-8 text-muted-foreground">You do not have permission to view this page.</div>;
 
   const updateUser = async (userId: string, field: "status" | "role", value: string) => {
     const response = await fetch("/api/admin/users", {
