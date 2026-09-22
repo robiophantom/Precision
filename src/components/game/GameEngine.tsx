@@ -119,11 +119,11 @@ export function GameEngine({ challenge, attemptId, onComplete }: GameEngineProps
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] w-full max-w-md mx-auto p-4 select-none touch-manipulation">
-      <div className="mb-8 text-center">
+      <div className="mb-8 text-center animate-reveal-up">
         <h2 className="text-sm font-medium tracking-widest text-muted-foreground mb-2 uppercase">
           Round {currentRoundIndex + 1} of 5
         </h2>
-        <div className="text-5xl font-bold tracking-tighter">
+        <div className="text-5xl font-bold tracking-tighter text-fire">
           {(currentRound?.targetMs / 1000).toFixed(3)}s
         </div>
         <p className="text-sm text-muted-foreground mt-2">Target duration</p>
@@ -140,7 +140,7 @@ export function GameEngine({ challenge, attemptId, onComplete }: GameEngineProps
           >
             <Button 
               onClick={handleStart} 
-              className="w-full h-40 text-3xl font-bold rounded-3xl"
+              className="w-full h-40 text-3xl font-bold rounded-3xl transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_50px_rgba(255,177,0,0.3)]"
               disabled={loading}
             >
               START
@@ -159,7 +159,7 @@ export function GameEngine({ challenge, attemptId, onComplete }: GameEngineProps
             <Button 
               onClick={handleStop} 
               variant="destructive"
-              className="w-full h-40 text-3xl font-bold rounded-3xl shadow-[0_0_40px_rgba(239,68,68,0.5)]"
+              className="w-full h-40 text-3xl font-bold rounded-3xl shadow-[0_0_50px_rgba(255,76,0,0.55)] animate-ember-pulse"
             >
               STOP
             </Button>
@@ -173,7 +173,7 @@ export function GameEngine({ challenge, attemptId, onComplete }: GameEngineProps
             animate={{ opacity: 1, y: 0 }}
             className="w-full space-y-6"
           >
-            <Card className="border-2 border-primary/20 bg-primary/5">
+            <Card className="glass-panel border-2 border-orange-400/25 bg-orange-400/5">
               <CardContent className="p-6 text-center space-y-4">
                 <div className="text-2xl font-bold text-primary tracking-widest">
                   {lastResult.qualitative}
@@ -194,7 +194,7 @@ export function GameEngine({ challenge, attemptId, onComplete }: GameEngineProps
 
                 <div className="pt-4 border-t border-primary/10">
                   <div className="text-muted-foreground text-sm mb-1">Score</div>
-                  <div className="text-4xl font-bold tracking-tighter">{lastResult.score}</div>
+                  <div className="text-4xl font-bold tracking-tighter text-fire">{lastResult.score}</div>
                 </div>
               </CardContent>
             </Card>

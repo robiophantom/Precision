@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth/AuthContext";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { ArrowLeft, Globe2, Users } from "lucide-react";
 
 interface LeaderboardEntry {
   rank: number;
@@ -17,12 +18,13 @@ interface LeaderboardEntry {
 export default function LeaderboardPage() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [scope, setScope] = useState<"global" | "friends">("global");
   const { user } = useAuth();
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
-        const res = await fetch("/api/leaderboard/global");
+        const res = await fetch(`/api/leaderboard/${scope}`);
         const data = await res.json();
         setEntries(data.leaderboard || []);
       } catch (err) {
@@ -32,7 +34,7 @@ export default function LeaderboardPage() {
       }
     };
     fetchLeaderboard();
-  }, []);
+  }, [scope]);
 
   if (loading) {
     return <div className="flex h-screen items-center justify-center">Loading...</div>;
@@ -40,16 +42,20 @@ export default function LeaderboardPage() {
 
   return (
     <div className="flex-1 flex flex-col pt-12 pb-24 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-4xl font-black tracking-tighter">GLOBAL LEADERBOARD</h1>
-        <Button variant="outline">
-          <Link href="/">Back</Link>
-        </Button>
+      <div className="mb-8 flex items-end justify-between gap-4">
+        <div>
+          <Link href="/" className="mb-3 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft size={16} /> Back to game</Link>
+          <h1 className="text-4xl font-black tracking-tighter">{scope === "global" ? "GLOBAL" : "FRIENDS"} <span className="text-orange-400">RANKINGS</span></h1>
+        </div>
+        <div className="flex rounded-xl border border-border/60 bg-card p-1">
+          <Button size="sm" variant={scope === "global" ? "default" : "ghost"} onClick={() => setScope("global")}><Globe2 size={15} /> Global</Button>
+          <Button size="sm" variant={scope === "friends" ? "default" : "ghost"} onClick={() => setScope("friends")}><Users size={15} /> Friends</Button>
+        </div>
       </div>
 
       <Card className="bg-transparent border-primary/20">
         <CardHeader>
-          <CardTitle>Today's Top Players</CardTitle>
+          <CardTitle>Today&apos;s Top Players</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="grid grid-cols-12 text-sm font-medium text-muted-foreground uppercase tracking-wider p-4 border-b border-primary/10">
@@ -61,7 +67,7 @@ export default function LeaderboardPage() {
           <div className="divide-y divide-primary/5">
             {entries.length === 0 ? (
               <div className="p-8 text-center text-muted-foreground">
-                No entries yet for today's challenge. Be the first!
+                No entries yet for today&apos;s challenge. Be the first!
               </div>
             ) : (
               entries.map((entry) => {

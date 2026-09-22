@@ -49,24 +49,24 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --background: oklch(0.13 0.035 45);
+  --foreground: oklch(0.98 0.025 90);
+  --card: oklch(0.19 0.045 35);
+  --card-foreground: oklch(0.96 0.02 95);
+  --popover: oklch(0.19 0.04 250);
+  --popover-foreground: oklch(0.96 0.02 95);
+  --primary: oklch(0.82 0.17 85);
+  --primary-foreground: oklch(0.18 0.04 35);
+  --secondary: oklch(0.25 0.07 35);
+  --secondary-foreground: oklch(0.96 0.02 95);
+  --muted: oklch(0.25 0.07 35);
+  --muted-foreground: oklch(0.76 0.045 70);
+  --accent: oklch(0.69 0.2 45);
+  --accent-foreground: oklch(0.98 0.025 90);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.82 0.17 85);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -84,24 +84,24 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --background: oklch(0.13 0.035 45);
+  --foreground: oklch(0.98 0.025 90);
+  --card: oklch(0.19 0.045 35);
+  --card-foreground: oklch(0.96 0.02 95);
+  --popover: oklch(0.19 0.04 250);
+  --popover-foreground: oklch(0.96 0.02 95);
+  --primary: oklch(0.82 0.17 85);
+  --primary-foreground: oklch(0.18 0.04 35);
+  --secondary: oklch(0.25 0.07 35);
+  --secondary-foreground: oklch(0.96 0.02 95);
+  --muted: oklch(0.25 0.07 35);
+  --muted-foreground: oklch(0.76 0.045 70);
+  --accent: oklch(0.69 0.2 45);
+  --accent-foreground: oklch(0.98 0.025 90);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --ring: oklch(0.82 0.17 85);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -123,8 +123,51 @@
   }
   body {
     @apply bg-background text-foreground;
+    background-image:
+      radial-gradient(circle at 12% 8%, oklch(0.7 0.18 45 / 16%), transparent 28rem),
+      radial-gradient(circle at 88% 18%, oklch(0.82 0.17 85 / 12%), transparent 24rem),
+      linear-gradient(135deg, oklch(0.15 0.04 35), oklch(0.11 0.025 45));
+    background-attachment: fixed;
   }
   html {
     @apply font-sans;
+  }
+
+  @keyframes float-up {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-14px) rotate(3deg); }
+  }
+
+  @keyframes ember-pulse {
+    0%, 100% { opacity: 0.35; transform: scale(0.9); }
+    50% { opacity: 0.85; transform: scale(1.1); }
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% center; }
+    100% { background-position: -200% center; }
+  }
+
+  @keyframes reveal-up {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-float-up { animation: float-up 5s ease-in-out infinite; }
+  .animate-ember-pulse { animation: ember-pulse 2.8s ease-in-out infinite; }
+  .animate-reveal-up { animation: reveal-up 0.7s ease-out both; }
+  .text-fire {
+    background: linear-gradient(110deg, #fff3a3, #ffb000 38%, #ff6b18 72%, #ff3d00);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: shimmer 5s linear infinite;
+  }
+  .glass-panel {
+    background: linear-gradient(145deg, oklch(0.28 0.07 45 / 75%), oklch(0.16 0.04 35 / 82%));
+    border: 1px solid oklch(0.9 0.15 80 / 16%);
+    box-shadow: 0 24px 80px oklch(0.04 0.02 30 / 35%), inset 0 1px oklch(1 0 0 / 8%);
+    backdrop-filter: blur(18px);
   }
 }

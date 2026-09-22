@@ -18,6 +18,16 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { challengeId, mode } = startSchema.parse(body);
 
+    const challenge = await prisma.dailyChallenge.findFirst({
+      where: {
+        id: challengeId,
+        status: "PUBLISHED",
+        challengeDate: new Date(new Date().toISOString().slice(0, 10)),
+      },
+      select: { id: true },
+    });
+    if (!challenge) return NextResponse.json({ error: "This challenge is not available today." }, { status: 404 });
+
     if (mode === "COMPETITIVE") {
       // Check for existing competitive attempt
       const existingAttempt = await prisma.attempt.findFirst({

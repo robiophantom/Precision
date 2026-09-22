@@ -9,7 +9,7 @@ const roundResultSchema = z.object({
   roundNumber: z.number().int().min(1).max(5),
   clientStartTimestamp: z.number().optional(),
   clientTapTimestamp: z.number().optional(),
-  measuredMs: z.number().int().nonnegative(),
+  measuredMs: z.number().int().min(1).max(60_000),
 });
 
 export async function POST(req: Request) {
@@ -56,9 +56,9 @@ export async function POST(req: Request) {
     
     // Very basic anti-cheat heuristic for V1:
     // If the difference between client timestamps doesn't closely match measuredMs, mark suspicious.
-    if (clientStartTimestamp && clientTapTimestamp) {
+    if (clientStartTimestamp !== undefined && clientTapTimestamp !== undefined) {
       const calculatedDuration = clientTapTimestamp - clientStartTimestamp;
-      if (Math.abs(calculatedDuration - measuredMs) > 100) {
+      if (calculatedDuration < 0 || Math.abs(calculatedDuration - measuredMs) > 100) {
         validationStatus = "SUSPICIOUS";
       }
     }

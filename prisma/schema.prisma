@@ -20,6 +20,7 @@ model User {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   status         String    @default("ACTIVE") // ACTIVE, BANNED
+  role           String    @default("USER") // USER, ADMIN
   
   // Relations
   sessions       Session[]
@@ -45,10 +46,12 @@ model Friendship {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  requester   User     @relation("Requester", fields: [requesterId], references: [id])
-  recipient   User     @relation("Recipient", fields: [recipientId], references: [id])
+  requester   User     @relation("Requester", fields: [requesterId], references: [id], onDelete: Cascade)
+  recipient   User     @relation("Recipient", fields: [recipientId], references: [id], onDelete: Cascade)
 
   @@unique([requesterId, recipientId])
+  @@index([recipientId, status])
+  @@index([requesterId, status])
 }
 
 model DailyChallenge {
@@ -88,7 +91,7 @@ model Attempt {
   verified        Boolean   @default(false)
   createdAt       DateTime  @default(now())
 
-  user            User           @relation(fields: [userId], references: [id])
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   challenge       DailyChallenge @relation(fields: [challengeId], references: [id])
   roundAttempts   RoundAttempt[]
 
@@ -120,7 +123,7 @@ model Streak {
   longestStreak      Int      @default(0)
   lastCompletedDate  DateTime? @db.Date
 
-  user               User     @relation(fields: [userId], references: [id])
+  user               User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Achievement {
@@ -137,8 +140,8 @@ model UserAchievement {
   achievementId String
   earnedAt      DateTime @default(now())
 
-  user          User        @relation(fields: [userId], references: [id])
-  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
 
   @@id([userId, achievementId])
 }

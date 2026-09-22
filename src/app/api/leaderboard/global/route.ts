@@ -19,7 +19,7 @@ export async function GET(req: Request) {
         challengeDate,
         status: "PUBLISHED",
       },
-      select: { id: true },
+      select: { id: true, challengeDate: true },
     });
 
     if (!challenge) {
@@ -62,7 +62,7 @@ export async function GET(req: Request) {
       errorMs: a.totalErrorMs,
     }));
 
-    return NextResponse.json({ leaderboard });
+    return NextResponse.json({ leaderboard, challengeDate: challenge.challengeDate });
   } catch (error) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

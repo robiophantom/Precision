@@ -11,7 +11,10 @@ const challengeSchema = z.object({
 export async function POST(req: Request) {
   try {
     const session = await getSession();
-    if (!session || session.username !== process.env.ADMIN_USERNAME) {
+    const admin = session
+      ? await prisma.user.findUnique({ where: { id: session.userId }, select: { role: true } })
+      : null;
+    if (!session || (admin?.role !== "ADMIN" && session.username !== process.env.ADMIN_USERNAME)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -47,7 +50,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true, challenge });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: "Invalid input", details: error.errors }, { status: 400 });
+      return NextResponse.json({ error: "Invalid input", details: error.issues }, { status: 400 });
     }
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

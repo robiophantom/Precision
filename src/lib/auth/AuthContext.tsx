@@ -7,6 +7,7 @@ interface User {
   id: string;
   username: string;
   avatarUrl: string | null;
+  role: string;
   createdAt: string;
   streak: { currentStreak: number; longestStreak: number } | null;
 }
@@ -42,7 +43,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    fetchUser();
+    const timer = window.setTimeout(() => { void fetchUser(); }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   const logout = async () => {

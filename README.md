@@ -1,57 +1,71 @@
-# Precision - Daily Timing Game
+# Precision
 
-"How accurately can you measure time?"
+Precision is a playful daily timing game: start the timer, stop it as close as possible to the target, and compare your score with the world or your friends.
 
-Precision is a competitive daily mini-game where players attempt to tap as close to a target duration as possible over 5 rounds. 
+## What is included
 
-## Features
-- **Daily Challenges**: 5 new target times every single day.
-- **Authoritative Scoring**: Uses a monotonic high-resolution client timer (`performance.now()`), but scores are verified and stored securely server-side.
-- **Global & Friends Leaderboard**: Compete with the world or just your friends.
-- **Daily Streak**: Keep coming back to build your consistency streak!
-- **Anti-Cheat**: Single attempt allowed per day; basic suspicious-result flagging based on timestamps.
+- Five-round daily challenge with one competitive attempt per player.
+- Server-calculated scoring, duplicate-round protection, and basic suspicious-result detection.
+- Daily streaks with longest-streak tracking.
+- Global and friends-only leaderboards.
+- Username friend requests and accept/reject flow.
+- Password authentication with secure HTTP-only JWT cookies.
+- Admin challenge creation plus user CRUD controls (ban/unban, promote/demote, delete).
+- A Prisma schema designed to add more game types without changing the user, streak, friend, or leaderboard foundations.
 
-## Tech Stack
-- **Frontend**: Next.js 15+ (App Router), React, Tailwind CSS, shadcn/ui, Framer Motion
-- **Backend**: Next.js API Routes (RESTful design for future Android integration)
-- **Database**: PostgreSQL (Prisma ORM with `@prisma/adapter-pg`)
-- **Authentication**: Custom JWT in HTTP-Only cookies via `jose`
-- **Testing**: Vitest (Unit) & Playwright (E2E)
+Google OAuth and phone OTP are intentionally not enabled in this first runnable version: both require provider credentials and phone infrastructure. The auth boundary is isolated so either provider can be added later.
 
-## Local Setup
+## Run locally
 
-1. **Install Dependencies**
-   ```bash
-   npm install
-   ```
+### Requirements
 
-2. **Database Setup**
-   You need a running PostgreSQL instance. Set your connection string in `.env`.
-   ```env
-   DATABASE_URL="postgres://postgres:postgres@localhost:5432/precision"
-   JWT_SECRET="your_secret_key"
-   ADMIN_USERNAME="admin"
-   ```
+- Node.js 20+
+- PostgreSQL 14+
 
-3. **Migrate the Database**
-   ```bash
-   npx prisma migrate dev --name init
-   ```
+### Setup
 
-4. **Run the Development Server**
-   ```bash
-   npm run dev
-   ```
+```bash
+npm install
+Copy-Item .env.example .env
+# Edit .env and set DATABASE_URL and a long JWT_SECRET
+npx prisma migrate dev --name init
+npx prisma generate
+npm run dev
+```
 
-## Admin
+Open http://localhost:3000.
 
-To create a new daily challenge, log in with the username specified in `ADMIN_USERNAME`, then navigate to `/admin`.
+The first account whose username matches `ADMIN_USERNAME` can access `/admin`. Additional administrators can be promoted from the admin dashboard.
 
-## Android API Integration
-The backend is completely decoupled from the Next.js UI using standard REST/JSON responses. 
-Authentication is handled via standard POST requests returning HTTP-Only cookies.
+### Create today's challenge
 
-## Deployment (Vercel)
-1. Link the repository to Vercel.
-2. Provide `DATABASE_URL`, `JWT_SECRET`, and `ADMIN_USERNAME` in Vercel Environment Variables.
-3. The build command `npm run build` will automatically run type-checks and build the Next.js app.
+Sign in as an administrator, open `/admin`, choose a date, and enter five target durations in milliseconds. A challenge must be published for the current UTC date before players can start it.
+
+## Environment variables
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `DATABASE_URL` | Yes | PostgreSQL connection string |
+| `JWT_SECRET` | Yes | Secret used to sign seven-day session cookies |
+| `ADMIN_USERNAME` | Yes | Backwards-compatible bootstrap admin username |
+
+See [.env.example](./.env.example) for a copyable template. Never commit `.env`.
+
+## Useful commands
+
+```bash
+npm run dev       # development server
+npm run build     # production build and type check
+npm run lint      # ESLint
+npx prisma studio # inspect local data
+```
+
+## API shape
+
+The UI uses REST endpoints under `/api`, so a future mobile client can reuse the same game and social flows:
+
+- `/api/auth/*`, `/api/me`
+- `/api/challenge/today`, `/api/challenge/start`, `/api/round/result`, `/api/challenge/complete`
+- `/api/leaderboard/global`, `/api/leaderboard/friends`
+- `/api/friends`, `/api/friends/request`, `/api/friends/respond`
+- `/api/admin/challenge`, `/api/admin/users`
