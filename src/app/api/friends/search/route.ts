@@ -6,7 +6,7 @@ export async function GET(req: Request) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const username = new URL(req.url).searchParams.get("username")?.trim();
+  const username = new URL(req.url).searchParams.get("username")?.trim().toLowerCase();
   if (!username || username.length < 3) {
     return NextResponse.json({ error: "Enter at least 3 characters" }, { status: 400 });
   }

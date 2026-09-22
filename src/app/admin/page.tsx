@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { Users, ShieldCheck, Ban, Trash2, Flame, CalendarDays, Sparkles, ArrowLeft } from "lucide-react";
+import { Users, ShieldCheck, Ban, Trash2, Flame, CalendarDays, Sparkles, ArrowLeft, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
@@ -20,6 +20,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [usersLoading, setUsersLoading] = useState(true);
+  const [resetDate, setResetDate] = useState(new Date().toISOString().slice(0, 10));
 
   const loadUsers = async () => {
     const response = await fetch("/api/admin/users");
@@ -55,6 +56,18 @@ export default function AdminPage() {
     const response = await fetch(`/api/admin/users?userId=${userId}`, { method: "DELETE" });
     if (response.ok) await loadUsers();
     else toast.error((await response.json()).error || "Could not delete user");
+  };
+
+  const resetChallenge = async (userId: string, username: string) => {
+    if (!window.confirm(`Make the ${resetDate} challenge available again for @${username}?`)) return;
+    const response = await fetch("/api/admin/challenge/reset", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, challengeDate: resetDate }),
+    });
+    const data = await response.json();
+    if (response.ok) toast.success(`Challenge reset for @${username}`);
+    else toast.error(data.error || "Could not reset challenge");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -153,7 +166,16 @@ export default function AdminPage() {
       </Card>
 
       <Card className="glass-panel animate-reveal-up [animation-delay:260ms]">
-        <CardHeader className="border-b border-yellow-100/10"><CardTitle className="flex items-center gap-2 text-2xl"><Users className="text-yellow-300" /> Player management</CardTitle><p className="text-sm text-muted-foreground">Keep the community healthy, welcoming, and competitive.</p></CardHeader>
+        <CardHeader className="border-b border-yellow-100/10">
+          <CardTitle className="flex items-center gap-2 text-2xl"><Users className="text-yellow-300" /> Player management</CardTitle>
+          <p className="text-sm text-muted-foreground">Keep the community healthy, welcoming, and competitive.</p>
+          <div className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border border-orange-300/15 bg-orange-300/5 p-3">
+            <RotateCcw size={16} className="text-orange-300" />
+            <Label htmlFor="reset-date" className="text-sm">Reset challenge date</Label>
+            <Input id="reset-date" type="date" className="h-9 w-auto" value={resetDate} onChange={(event) => setResetDate(event.target.value)} />
+            <span className="text-xs text-muted-foreground">Use the action on a player below to let them replay.</span>
+          </div>
+        </CardHeader>
         <CardContent>
           {usersLoading ? <p className="text-muted-foreground">Loading users...</p> : (
             <div className="space-y-3">
@@ -166,6 +188,7 @@ export default function AdminPage() {
                   <div className="flex gap-2">
                     <Button size="sm" variant="outline" onClick={() => updateUser(managedUser.id, "status", managedUser.status === "BANNED" ? "ACTIVE" : "BANNED")}><Ban size={14} /> {managedUser.status === "BANNED" ? "Unban" : "Ban"}</Button>
                     <Button size="sm" variant="outline" onClick={() => updateUser(managedUser.id, "role", managedUser.role === "ADMIN" ? "USER" : "ADMIN")}><ShieldCheck size={14} /> {managedUser.role === "ADMIN" ? "Remove admin" : "Make admin"}</Button>
+                    <Button size="sm" variant="outline" onClick={() => resetChallenge(managedUser.id, managedUser.username)}><RotateCcw size={14} /> Reset play</Button>
                     <Button size="sm" variant="destructive" onClick={() => deleteUser(managedUser.id)}><Trash2 size={14} /></Button>
                   </div>
                 </motion.div>

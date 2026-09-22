@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { username } = requestSchema.parse(body);
+    const username = requestSchema.parse(body).username.trim().toLowerCase();
 
     if (username.toLowerCase() === session.username.toLowerCase()) {
       return NextResponse.json({ error: "Cannot friend yourself" }, { status: 400 });

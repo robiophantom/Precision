@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { calculateRoundScore, getQualitativeFeedback } from "@/domain/game/scoring";
 
 export interface ChallengeRound {
   roundNumber: number;
@@ -20,13 +21,14 @@ export interface Challenge {
 interface GameEngineProps {
   challenge: Challenge;
   attemptId: string;
+  initialRoundIndex?: number;
   onComplete: (score: number, error: number) => void;
 }
 
 type GameState = "READY" | "TIMING" | "ROUND_RESULT";
 
-export function GameEngine({ challenge, attemptId, onComplete }: GameEngineProps) {
-  const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
+export function GameEngine({ challenge, attemptId, initialRoundIndex = 0, onComplete }: GameEngineProps) {
+  const [currentRoundIndex, setCurrentRoundIndex] = useState(initialRoundIndex);
   const [gameState, setGameState] = useState<GameState>("READY");
   const [lastResult, setLastResult] = useState<{ score: number; errorMs: number; actualMs: number; qualitative: string } | null>(null);
   const [loading, setLoading] = useState(false);
@@ -40,7 +42,7 @@ export function GameEngine({ challenge, attemptId, onComplete }: GameEngineProps
     startTimestampRef.current = performance.now();
   };
 
-  const handleStop = async () => {
+  const handleStop = () => {
     if (!startTimestampRef.current || gameState !== "TIMING") return;
     
     const tapTimestamp = performance.now();
@@ -49,9 +51,21 @@ export function GameEngine({ challenge, attemptId, onComplete }: GameEngineProps
     const clientTapTimestamp = Math.round(tapTimestamp);
     
     startTimestampRef.current = null;
+    const errorMs = Math.abs(actualMs - currentRound.targetMs);
+    const score = calculateRoundScore(currentRound.targetMs, actualMs);
+
+    // Show the result before waiting for the network so stopping feels instantaneous.
+    setLastResult({
+      score,
+      errorMs,
+      actualMs,
+      qualitative: getQualitativeFeedback(score),
+    });
+    setGameState("ROUND_RESULT");
     setLoading(true);
 
-    try {
+    void (async () => {
+      try {
       const res = await fetch("/api/round/result", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -65,29 +79,19 @@ export function GameEngine({ challenge, attemptId, onComplete }: GameEngineProps
       });
 
       const data = await res.json();
-      if (res.ok) {
-        let qualitative = "MISS";
-        if (data.score >= 950) qualitative = "PERFECT";
-        else if (data.score >= 800) qualitative = "GREAT";
-        else if (data.score >= 500) qualitative = "GOOD";
-
-        setLastResult({
-          score: data.score,
-          errorMs: data.errorMs,
-          actualMs,
-          qualitative,
-        });
-        setGameState("ROUND_RESULT");
-      } else {
+      if (!res.ok) {
         toast.error(data.error || "Failed to submit round");
+        setLastResult(null);
         setGameState("READY");
       }
-    } catch (err) {
-      toast.error("Network error");
-      setGameState("READY");
-    } finally {
-      setLoading(false);
-    }
+      } catch {
+        toast.error("Network error");
+        setLastResult(null);
+        setGameState("READY");
+      } finally {
+        setLoading(false);
+      }
+    })();
   };
 
   const handleNext = async () => {
@@ -187,7 +191,7 @@ export function GameEngine({ challenge, attemptId, onComplete }: GameEngineProps
                   <div className="space-y-1">
                     <div className="text-muted-foreground">Error</div>
                     <div className="text-xl font-mono">
-                      {lastResult.errorMs > 0 ? "+" : ""}{(lastResult.errorMs / 1000).toFixed(3)}s
+                      {(lastResult.errorMs / 1000).toFixed(3)}s
                     </div>
                   </div>
                 </div>

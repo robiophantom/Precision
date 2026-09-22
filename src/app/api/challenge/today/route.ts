@@ -16,8 +16,14 @@ export async function GET() {
     const session = await getSession();
     const attempt = session
       ? await prisma.attempt.findFirst({
-        where: { userId: session.userId, challengeId: challenge.id, mode: "COMPETITIVE" },
-          select: { id: true, status: true, totalScore: true, totalErrorMs: true },
+          where: { userId: session.userId, challengeId: challenge.id, mode: "COMPETITIVE" },
+          select: {
+            id: true,
+            status: true,
+            totalScore: true,
+            totalErrorMs: true,
+            roundAttempts: { select: { roundNumber: true }, orderBy: { roundNumber: "asc" } },
+          },
         })
       : null;
 
@@ -30,7 +36,11 @@ export async function GET() {
           targetMs: r.targetMs,
         })),
       },
-      hasPlayed: Boolean(attempt),
+      hasPlayed: attempt?.status === "COMPLETED",
+      resumableAttemptId: attempt?.status === "IN_PROGRESS" ? attempt.id : null,
+      completedRoundNumbers: attempt?.status === "IN_PROGRESS"
+        ? attempt.roundAttempts.map((round) => round.roundNumber)
+        : [],
       attempt: attempt
         ? { status: attempt.status, totalScore: attempt.totalScore, totalErrorMs: attempt.totalErrorMs }
         : null,

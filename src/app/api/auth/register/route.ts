@@ -12,7 +12,8 @@ const registerSchema = z.object({
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { username, password } = registerSchema.parse(body);
+    const { username: rawUsername, password } = registerSchema.parse(body);
+    const username = rawUsername.toLowerCase();
 
     const existingUser = await prisma.user.findUnique({
       where: { username },
@@ -23,12 +24,15 @@ export async function POST(req: Request) {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const user = await prisma.user.create({
-      data: {
-        username,
-        passwordHash,
-      },
-    });
+    let user;
+    try {
+      user = await prisma.user.create({ data: { username, passwordHash } });
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("Unique constraint")) {
+        return NextResponse.json({ error: "Username already taken" }, { status: 409 });
+      }
+      throw error;
+    }
 
     await setSessionCookie({ userId: user.id, username: user.username });
 

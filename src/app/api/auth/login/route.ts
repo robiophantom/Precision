@@ -12,7 +12,8 @@ const loginSchema = z.object({
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { username, password } = loginSchema.parse(body);
+    const { username: rawUsername, password } = loginSchema.parse(body);
+    const username = rawUsername.trim().toLowerCase();
 
     const user = await prisma.user.findUnique({
       where: { username },

@@ -66,6 +66,7 @@ export default function SignupPage() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />
+              <p className="text-xs text-muted-foreground">Usernames are unique and not case-sensitive. Use 3–20 letters, numbers, or underscores.</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>

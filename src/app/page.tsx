@@ -5,6 +5,7 @@ import { DailyChallengeController } from "@/components/game/DailyChallengeContro
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { Trophy, Users } from "lucide-react";
 
 export default function Home() {
   const { user, loading } = useAuth();
@@ -28,19 +29,20 @@ export default function Home() {
         <Link href="/" className="text-2xl font-black tracking-tighter">PRECISION<span className="text-fire">.</span></Link>
 
         {user ? (
-          <div className="flex items-center gap-4">
-            <div className="text-sm font-medium">{user.username}</div>
+          <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-4">
+            <div className="hidden text-sm font-medium sm:block">{user.username}</div>
 
             {user.streak && user.streak.currentStreak > 0 && (
-              <div className="text-sm font-bold text-orange-500">
+              <div className="text-xs font-bold text-orange-500 sm:text-sm">
                 🔥 {user.streak.currentStreak}
               </div>
             )}
 
-            <Link href="/friends" className="hidden text-sm text-muted-foreground hover:text-foreground sm:block">Friends</Link>
-            <Link href="/leaderboard" className="hidden text-sm text-muted-foreground hover:text-foreground sm:block">Rankings</Link>
+            <Link href="/friends" aria-label="Friends" className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground sm:text-sm"><Users size={15} /> Friends</Link>
+            <Link href="/leaderboard" aria-label="Rankings" className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground sm:text-sm"><Trophy size={15} /> Rankings</Link>
             <Button
               variant="ghost"
+              className="px-2 sm:px-4"
               onClick={async () => {
                 await fetch("/api/auth/logout", {
                   method: "POST",

@@ -39,6 +39,9 @@ export async function POST(req: Request) {
       });
 
       if (existingAttempt) {
+        if (existingAttempt.status === "IN_PROGRESS") {
+          return NextResponse.json({ attemptId: existingAttempt.id, resumed: true });
+        }
         return NextResponse.json(
           { error: "You have already started or completed this challenge." },
           { status: 403 }

@@ -18,6 +18,8 @@ export function DailyChallengeController() {
   const [finalScore, setFinalScore] = useState<number | null>(null);
   const [finalError, setFinalError] = useState<number | null>(null);
   const [hasPlayed, setHasPlayed] = useState(false);
+  const [resumeAttemptId, setResumeAttemptId] = useState<string | null>(null);
+  const [resumeRoundIndex, setResumeRoundIndex] = useState(0);
   const [showGuide, setShowGuide] = useState(false);
 
   useEffect(() => {
@@ -28,6 +30,8 @@ export function DailyChallengeController() {
         if (data.challenge) {
           setChallenge(data.challenge);
           setHasPlayed(Boolean(data.hasPlayed));
+          setResumeAttemptId(data.resumableAttemptId ?? null);
+          setResumeRoundIndex(data.completedRoundNumbers?.length ?? 0);
         }
       } catch (err) {
         toast.error("Failed to load today's challenge");
@@ -51,6 +55,7 @@ export function DailyChallengeController() {
       
       if (res.ok) {
         setAttemptId(data.attemptId);
+        setResumeRoundIndex(0);
       } else {
         toast.error(data.error || "Could not start challenge");
       }
@@ -160,9 +165,14 @@ export function DailyChallengeController() {
           </CardContent>
         </Card>
 
+        {resumeAttemptId && !hasPlayed && (
+          <Button onClick={() => setAttemptId(resumeAttemptId)} className="w-full h-16 text-xl font-bold rounded-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_35px_rgba(255,111,24,0.35)]">
+            RESUME CHALLENGE
+          </Button>
+        )}
         <div className="w-full space-y-3 animate-reveal-up [animation-delay:220ms]">
-          <Button onClick={handleStartAttempt} disabled={hasPlayed} className="w-full h-16 text-xl font-bold rounded-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_35px_rgba(255,111,24,0.35)] disabled:cursor-not-allowed disabled:opacity-70">
-            {hasPlayed ? "ALREADY PLAYED" : "PLAY COMPETITIVE"}
+          <Button onClick={handleStartAttempt} disabled={hasPlayed || Boolean(resumeAttemptId)} className="w-full h-16 text-xl font-bold rounded-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_35px_rgba(255,111,24,0.35)] disabled:cursor-not-allowed disabled:opacity-70">
+            {hasPlayed ? "ALREADY PLAYED" : resumeAttemptId ? "CHALLENGE IN PROGRESS" : "PLAY COMPETITIVE"}
           </Button>
           {hasPlayed && <p className="text-sm text-orange-200/80">Your competitive attempt is locked in. Come back tomorrow for a fresh shot.</p>}
         </div>
@@ -208,6 +218,7 @@ export function DailyChallengeController() {
     <GameEngine
       challenge={challenge}
       attemptId={attemptId}
+      initialRoundIndex={resumeRoundIndex}
       onComplete={handleComplete}
     />
   );
