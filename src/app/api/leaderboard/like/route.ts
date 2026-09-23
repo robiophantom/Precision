@@ -9,11 +9,21 @@ export async function POST(req: Request) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Sign in to react to scores." }, { status: 401 });
   try {
-    const data = input.parse(await req.json());
-    const where = { userId: session.userId, scoreUserId: data.scoreUserId, context: data.context, contextId: data.contextId };
-    if (data.liked) await prisma.scoreLike.upsert({ where: { userId_scoreUserId_context_contextId: where }, create: { ...data, userId: session.userId }, update: {} });
-    else await prisma.scoreLike.deleteMany({ where });
-    return NextResponse.json({ likes: await prisma.scoreLike.count({ where: { scoreUserId: data.scoreUserId, context: data.context, contextId: data.contextId } }), liked: data.liked });
+    const { liked, scoreUserId, context, contextId } = input.parse(await req.json());
+    const where = { userId: session.userId, scoreUserId, context, contextId };
+    if (liked) {
+      await prisma.scoreLike.upsert({
+        where: { userId_scoreUserId_context_contextId: where },
+        create: where,
+        update: {},
+      });
+    } else {
+      await prisma.scoreLike.deleteMany({ where });
+    }
+    return NextResponse.json({
+      likes: await prisma.scoreLike.count({ where: { scoreUserId, context, contextId } }),
+      liked,
+    });
   } catch {
     return NextResponse.json({ error: "Could not update reaction." }, { status: 400 });
   }

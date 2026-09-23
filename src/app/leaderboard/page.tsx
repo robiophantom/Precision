@@ -24,6 +24,7 @@ export default function LeaderboardPage() {
   const [scope, setScope] = useState<"global" | "friends">("global");
   const [date, setDate] = useState<"today" | "yesterday">("today");
   const [challengeId, setChallengeId] = useState("");
+  const [pendingLikes, setPendingLikes] = useState<string[]>([]);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -33,7 +34,7 @@ export default function LeaderboardPage() {
         const data = await res.json();
         setEntries(data.leaderboard || []);
         setChallengeId(data.challengeId || "");
-      } catch (err) {
+      } catch {
         console.error("Failed to load leaderboard");
       } finally {
         setLoading(false);
@@ -43,10 +44,21 @@ export default function LeaderboardPage() {
   }, [scope, date]);
 
   const toggleLike = async (entry: LeaderboardEntry) => {
+    if (!challengeId || pendingLikes.includes(entry.userId)) return;
     const liked = !entry.liked;
+    setPendingLikes((items) => [...items, entry.userId]);
     setEntries((items) => items.map((item) => item.userId === entry.userId ? { ...item, liked, likes: item.likes + (liked ? 1 : -1) } : item));
-    const response = await fetch("/api/leaderboard/like", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scoreUserId: entry.userId, context: scope === "global" ? "DAILY_GLOBAL" : "DAILY_FRIENDS", contextId: challengeId, liked }) });
-    if (!response.ok) setEntries((items) => items.map((item) => item.userId === entry.userId ? entry : item));
+    try {
+      const response = await fetch("/api/leaderboard/like", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scoreUserId: entry.userId, context: scope === "global" ? "DAILY_GLOBAL" : "DAILY_FRIENDS", contextId: challengeId, liked }) });
+      if (!response.ok) setEntries((items) => items.map((item) => item.userId === entry.userId ? entry : item));
+      else {
+        const result = await response.json();
+        setEntries((items) => items.map((item) => item.userId === entry.userId ? { ...item, liked: result.liked, likes: result.likes } : item));
+      }
+    } catch {
+      setEntries((items) => items.map((item) => item.userId === entry.userId ? entry : item));
+    }
+    setPendingLikes((items) => items.filter((userId) => userId !== entry.userId));
   };
 
   const requestFriend = async (entry: LeaderboardEntry) => {
@@ -77,10 +89,11 @@ export default function LeaderboardPage() {
           <CardTitle>Today&apos;s Top Players</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="grid grid-cols-12 text-sm font-medium text-muted-foreground uppercase tracking-wider p-4 border-b border-primary/10">
+          <div className="grid grid-cols-12 items-center gap-3 p-4 text-sm font-medium uppercase tracking-wider text-muted-foreground border-b border-primary/10">
             <div className="col-span-2 text-center">Rank</div>
-            <div className="col-span-6">Player</div>
-            <div className="col-span-4 text-right">Score</div>
+            <div className="col-span-4">Player</div>
+            <div className="col-span-2 text-right">Score</div>
+            <div className="col-span-4 text-right">Actions</div>
           </div>
           
           <div className="divide-y divide-primary/5">
@@ -94,22 +107,25 @@ export default function LeaderboardPage() {
                 return (
                   <div 
                     key={entry.userId} 
-                    className={`grid grid-cols-12 items-center p-4 transition-colors ${
+                    className={`grid grid-cols-12 items-center gap-3 p-4 transition-colors ${
                       isCurrentUser ? "bg-primary/10 font-bold" : "hover:bg-primary/5"
                     }`}
                   >
                     <div className="col-span-2 text-center text-xl">
                       {entry.rank === 1 ? "🥇" : entry.rank === 2 ? "🥈" : entry.rank === 3 ? "🥉" : entry.rank}
                     </div>
-                    <div className="col-span-6 flex items-center gap-2">
+                    <div className="col-span-4 flex min-w-0 items-center gap-2">
                       <span className={isCurrentUser ? "text-primary" : ""}>
-                        {entry.username} {isCurrentUser && "(You)"}
+                        <span className="block truncate">{entry.username} {isCurrentUser && "(You)"}</span>
                       </span>
                     </div>
-                    <div className="col-span-4 text-right">
+                    <div className="col-span-2 text-right">
                       <div className="text-lg">{entry.score}</div>
                       <div className="text-xs text-muted-foreground">{(entry.errorMs / 1000).toFixed(3)}s err</div>
-                      <div className="mt-2 flex justify-end gap-2"><button aria-label={`Like ${entry.username}'s score`} onClick={() => void toggleLike(entry)} className={entry.liked ? "text-rose-400" : "text-muted-foreground"}><Heart size={16} fill={entry.liked ? "currentColor" : "none"} /> <span className="text-xs">{entry.likes}</span></button>{!isCurrentUser && <button onClick={() => void requestFriend(entry)} disabled={entry.relationship !== "NONE"} className="text-xs text-primary disabled:text-muted-foreground" title={entry.relationship === "ACCEPTED" ? "Already connected" : entry.relationship === "PENDING" ? "Request pending" : "Send friend request"}>{entry.relationship === "ACCEPTED" ? "Connected" : entry.relationship === "PENDING" ? "Pending" : <UserPlus size={16} />}</button>}</div>
+                    </div>
+                    <div className="col-span-4 flex min-w-0 items-center justify-end gap-2">
+                      <button disabled={pendingLikes.includes(entry.userId) || !challengeId} aria-label={`Like ${entry.username}'s score`} onClick={() => void toggleLike(entry)} className={`inline-flex h-9 min-w-[4.75rem] items-center justify-center gap-1 rounded-lg border px-2 text-xs font-semibold transition-colors ${entry.liked ? "border-rose-400/50 bg-rose-400/10 text-rose-400" : "border-border/60 text-muted-foreground hover:border-rose-300/50 hover:text-rose-300"} disabled:cursor-wait disabled:opacity-60`}><Heart size={15} fill={entry.liked ? "currentColor" : "none"} /><span>{entry.likes}</span></button>
+                      <button onClick={() => void requestFriend(entry)} disabled={isCurrentUser || entry.relationship !== "NONE"} className="inline-flex h-9 min-w-[6.5rem] items-center justify-center gap-1 rounded-lg border border-border/60 px-2 text-xs font-semibold text-primary transition-colors hover:border-primary/50 disabled:cursor-default disabled:text-muted-foreground" title={isCurrentUser ? "This is you" : entry.relationship === "ACCEPTED" ? "Already connected" : entry.relationship === "PENDING" ? "Request pending" : "Send friend request"}>{isCurrentUser ? "You" : entry.relationship === "ACCEPTED" ? "Connected" : entry.relationship === "PENDING" ? "Pending" : <><UserPlus size={15} /> <span>Connect</span></>}</button>
                     </div>
                   </div>
                 );
