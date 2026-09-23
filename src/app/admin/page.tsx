@@ -17,6 +17,7 @@ export default function AdminPage() {
   const { user, loading: authLoading } = useAuth();
   const [date, setDate] = useState("");
   const [rounds, setRounds] = useState<string[]>(["1570", "3280", "840", "4610", "2350"]);
+  const [roundCount, setRoundCount] = useState(5);
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [usersLoading, setUsersLoading] = useState(true);
@@ -137,7 +138,7 @@ export default function AdminPage() {
       <Card className="glass-panel animate-reveal-up [animation-delay:180ms]">
         <CardHeader className="border-b border-yellow-100/10">
           <CardTitle className="flex items-center gap-3 text-2xl"><CalendarDays className="text-yellow-300" /> Create a daily spark</CardTitle>
-          <p className="text-sm text-muted-foreground">Publish five precise targets and give the community something to chase.</p>
+          <p className="text-sm text-muted-foreground">Choose between one and five precise targets for the community to chase.</p>
         </CardHeader>
         <CardContent className="pt-6">
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -147,7 +148,11 @@ export default function AdminPage() {
             </div>
             
             <div className="space-y-2">
-              <Label>Five targets <span className="font-normal text-muted-foreground">(milliseconds)</span></Label>
+              <Label>Number of rounds</Label>
+              <select className="w-full rounded-md border border-input bg-background p-2" value={roundCount} onChange={(event) => { const count = Number(event.target.value); setRoundCount(count); setRounds((current) => [...current, "1500", "2500", "3500", "4500", "5500"].slice(0, count)); }}>{[1, 2, 3, 4, 5].map((count) => <option key={count} value={count}>{count}</option>)}</select>
+            </div>
+            <div className="space-y-2">
+              <Label>Round targets <span className="font-normal text-muted-foreground">(milliseconds)</span></Label>
               <div className="grid gap-3 sm:grid-cols-5">
                 {rounds.map((r, i) => (
                   <motion.div key={i} whileHover={{ y: -3 }} className="relative">

@@ -1,6 +1,9 @@
 import { SignJWT, jwtVerify } from "jose";
 
-const JWT_SECRET = process.env.JWT_SECRET || "super_secret_fallback_key_for_dev_only";
+const JWT_SECRET = process.env.JWT_SECRET?.trim();
+if (!JWT_SECRET || JWT_SECRET.length < 32) {
+  throw new Error("JWT_SECRET must be configured with at least 32 characters.");
+}
 const encodedKey = new TextEncoder().encode(JWT_SECRET);
 
 export interface TokenPayload {
@@ -22,7 +25,7 @@ export async function verifyToken(token: string): Promise<TokenPayload | null> {
       algorithms: ["HS256"],
     });
     return payload as unknown as TokenPayload;
-  } catch (error) {
+  } catch {
     return null;
   }
 }

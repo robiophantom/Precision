@@ -5,7 +5,7 @@ import { z } from "zod";
 
 const challengeSchema = z.object({
   challengeDate: z.string(), // YYYY-MM-DD
-  rounds: z.array(z.number().int().min(100).max(10000)).length(5), // 5 targets in ms
+  rounds: z.array(z.number().int().min(100).max(10000)).min(1).max(5),
 });
 
 export async function POST(req: Request) {

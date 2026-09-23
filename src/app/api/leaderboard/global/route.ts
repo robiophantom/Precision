@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
+import { getSession } from "@/lib/auth/session";
+import { addSocialMetadata } from "@/lib/leaderboard/social";
 
-export const revalidate = 60; // Cache for 60 seconds
+export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
   try {
@@ -9,7 +11,9 @@ export async function GET(req: Request) {
     const dateParam = searchParams.get("date");
     
     let challengeDate = new Date();
-    if (dateParam) {
+    if (dateParam === "yesterday") {
+      challengeDate.setUTCDate(challengeDate.getUTCDate() - 1);
+    } else if (dateParam) {
       challengeDate = new Date(dateParam);
     }
     challengeDate.setUTCHours(0, 0, 0, 0);
@@ -62,7 +66,14 @@ export async function GET(req: Request) {
       errorMs: a.totalErrorMs,
     }));
 
-    return NextResponse.json({ leaderboard, challengeDate: challenge.challengeDate });
+    await prisma.leaderboardSnapshot.upsert({
+      where: { challengeDate_scope: { challengeDate: challenge.challengeDate, scope: "GLOBAL" } },
+      create: { challengeDate: challenge.challengeDate, scope: "GLOBAL", entries: { create: leaderboard.map((entry) => ({ userId: entry.userId, rank: entry.rank, score: entry.score, errorMs: entry.errorMs })) } },
+      update: { entries: { deleteMany: {}, create: leaderboard.map((entry) => ({ userId: entry.userId, rank: entry.rank, score: entry.score, errorMs: entry.errorMs })) } },
+    });
+
+    const session = await getSession();
+    return NextResponse.json({ leaderboard: await addSocialMetadata(leaderboard, "DAILY_GLOBAL", challenge.id, session?.userId), challengeDate: challenge.challengeDate, challengeId: challenge.id });
   } catch (error) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

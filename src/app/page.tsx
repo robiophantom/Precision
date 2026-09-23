@@ -1,15 +1,26 @@
 "use client";
 
 import { useAuth } from "@/lib/auth/AuthContext";
+import { useEffect } from "react";
 import { DailyChallengeController } from "@/components/game/DailyChallengeController";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Trophy, Users } from "lucide-react";
+import { Trophy, Users, UserCircle, Swords, Dumbbell } from "lucide-react";
 
 export default function Home() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  useEffect(() => {
+    if (user && typeof Notification !== "undefined" && Notification.permission === "default") {
+      void Notification.requestPermission().then((permission) => { if (permission === "granted") void fetch("/api/me/profile", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ webNotifications: true }) }); });
+    }
+  }, [user]);
+  useEffect(() => {
+    if (!user || typeof Notification === "undefined" || Notification.permission !== "granted") return;
+    const poll = window.setInterval(() => { void fetch("/api/notifications").then((response) => response.json()).then((data) => data.notifications?.forEach((notification: { title: string; body: string }) => new Notification(notification.title, { body: notification.body }))); }, 30_000);
+    return () => window.clearInterval(poll);
+  }, [user]);
 
   if (loading) {
     return (
@@ -40,6 +51,10 @@ export default function Home() {
 
             <Link href="/friends" aria-label="Friends" className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground sm:text-sm"><Users size={15} /> Friends</Link>
             <Link href="/leaderboard" aria-label="Rankings" className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground sm:text-sm"><Trophy size={15} /> Rankings</Link>
+            <Link href="/practice" className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground sm:text-sm"><Dumbbell size={15} /> Practice</Link>
+            <Link href="/profile" className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground sm:text-sm"><UserCircle size={15} /> Profile</Link>
+            <Link href="/challenge/new" className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground sm:text-sm"><Swords size={15} /> Challenge</Link>
+            <Link href="/challenge/history" className="hidden text-xs text-muted-foreground hover:text-foreground sm:block sm:text-sm">History</Link>
             <Button
               variant="ghost"
               className="px-2 sm:px-4"

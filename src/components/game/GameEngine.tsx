@@ -95,7 +95,7 @@ export function GameEngine({ challenge, attemptId, initialRoundIndex = 0, onComp
   };
 
   const handleNext = async () => {
-    if (currentRoundIndex < 4) {
+    if (currentRoundIndex < challenge.rounds.length - 1) {
       setCurrentRoundIndex((prev) => prev + 1);
       setLastResult(null);
       setGameState("READY");
@@ -125,7 +125,7 @@ export function GameEngine({ challenge, attemptId, initialRoundIndex = 0, onComp
     <div className="flex flex-col items-center justify-center min-h-[60vh] w-full max-w-md mx-auto p-4 select-none touch-manipulation">
       <div className="mb-8 text-center animate-reveal-up">
         <h2 className="text-sm font-medium tracking-widest text-muted-foreground mb-2 uppercase">
-          Round {currentRoundIndex + 1} of 5
+          Round {currentRoundIndex + 1} of {challenge.rounds.length}
         </h2>
         <div className="text-5xl font-bold tracking-tighter text-fire">
           {(currentRound?.targetMs / 1000).toFixed(3)}s

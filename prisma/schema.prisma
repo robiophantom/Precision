@@ -12,23 +12,59 @@ datasource db {
 }
 
 model User {
-  id             String    @id @default(cuid())
-  username       String    @unique
-  email          String?   @unique
-  passwordHash   String
-  avatarUrl      String?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  status         String    @default("ACTIVE") // ACTIVE, BANNED
-  role           String    @default("USER") // USER, ADMIN
-  
+  id               String    @id @default(cuid())
+  username         String    @unique
+  email            String?   @unique
+  emailVerifiedAt  DateTime?
+  passwordHash     String
+  avatarUrl        String?
+  webNotifications Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  status           String    @default("ACTIVE") // ACTIVE, BANNED
+  role             String    @default("USER") // USER, ADMIN
+
   // Relations
-  sessions       Session[]
-  attempts       Attempt[]
-  streak         Streak?
-  achievements   UserAchievement[]
-  friendshipsReq Friendship[] @relation("Requester")
-  friendshipsRec Friendship[] @relation("Recipient")
+  sessions                Session[]
+  attempts                Attempt[]
+  streak                  Streak?
+  achievements            UserAchievement[]
+  friendshipsReq          Friendship[]               @relation("Requester")
+  friendshipsRec          Friendship[]               @relation("Recipient")
+  emailVerificationTokens EmailVerificationToken[]
+  passwordResetTokens     PasswordResetToken[]
+  practiceSessions        PracticeSession[]
+  createdChallenges       Challenge[]                @relation("ChallengeCreator")
+  challengeParticipants   ChallengeParticipant[]
+  notifications           Notification[]
+  leaderboardEntries      LeaderboardSnapshotEntry[]
+  scoreLikesGiven         ScoreLike[]                @relation("ScoreLikesGiven")
+  scoreLikesReceived      ScoreLike[]                @relation("ScoreLikesReceived")
+}
+
+model EmailVerificationToken {
+  id         String    @id @default(cuid())
+  userId     String
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  lastSentAt DateTime?
+  createdAt  DateTime  @default(now())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+model PasswordResetToken {
+  id         String    @id @default(cuid())
+  userId     String
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
 }
 
 model Session {
@@ -46,8 +82,8 @@ model Friendship {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  requester   User     @relation("Requester", fields: [requesterId], references: [id], onDelete: Cascade)
-  recipient   User     @relation("Recipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  requester User @relation("Requester", fields: [requesterId], references: [id], onDelete: Cascade)
+  recipient User @relation("Recipient", fields: [recipientId], references: [id], onDelete: Cascade)
 
   @@unique([requesterId, recipientId])
   @@index([recipientId, status])
@@ -62,44 +98,44 @@ model DailyChallenge {
   publishedAt   DateTime?
   createdAt     DateTime  @default(now())
 
-  rounds        ChallengeRound[]
-  attempts      Attempt[]
+  rounds   ChallengeRound[]
+  attempts Attempt[]
 }
 
 model ChallengeRound {
-  id              String         @id @default(cuid())
-  challengeId     String
-  roundNumber     Int
-  targetMs        Int
-  
-  challenge       DailyChallenge @relation(fields: [challengeId], references: [id])
-  roundAttempts   RoundAttempt[]
+  id          String @id @default(cuid())
+  challengeId String
+  roundNumber Int
+  targetMs    Int
+
+  challenge     DailyChallenge @relation(fields: [challengeId], references: [id])
+  roundAttempts RoundAttempt[]
 
   @@unique([challengeId, roundNumber])
 }
 
 model Attempt {
-  id              String    @id @default(cuid())
-  userId          String
-  challengeId     String
-  mode            String    @default("COMPETITIVE") // COMPETITIVE, PRACTICE
-  status          String    @default("IN_PROGRESS") // IN_PROGRESS, COMPLETED
-  startedAt       DateTime  @default(now())
-  completedAt     DateTime?
-  totalScore      Int       @default(0)
-  totalErrorMs    Int       @default(0)
-  verified        Boolean   @default(false)
-  createdAt       DateTime  @default(now())
+  id           String    @id @default(cuid())
+  userId       String
+  challengeId  String
+  mode         String    @default("COMPETITIVE") // COMPETITIVE, PRACTICE
+  status       String    @default("IN_PROGRESS") // IN_PROGRESS, COMPLETED
+  startedAt    DateTime  @default(now())
+  completedAt  DateTime?
+  totalScore   Int       @default(0)
+  totalErrorMs Int       @default(0)
+  verified     Boolean   @default(false)
+  createdAt    DateTime  @default(now())
 
-  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  challenge       DailyChallenge @relation(fields: [challengeId], references: [id])
-  roundAttempts   RoundAttempt[]
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge     DailyChallenge @relation(fields: [challengeId], references: [id])
+  roundAttempts RoundAttempt[]
 
   @@unique([userId, challengeId, mode], name: "unique_competitive_attempt")
 }
 
 model RoundAttempt {
-  id                   String         @id @default(cuid())
+  id                   String   @id @default(cuid())
   attemptId            String
   challengeRoundId     String
   roundNumber          Int
@@ -108,31 +144,135 @@ model RoundAttempt {
   measuredMs           Int
   errorMs              Int
   score                Int
-  validationStatus     String         @default("PENDING") // PENDING, VERIFIED, SUSPICIOUS, REJECTED
-  createdAt            DateTime       @default(now())
+  validationStatus     String   @default("PENDING") // PENDING, VERIFIED, SUSPICIOUS, REJECTED
+  createdAt            DateTime @default(now())
 
-  attempt              Attempt        @relation(fields: [attemptId], references: [id])
-  challengeRound       ChallengeRound @relation(fields: [challengeRoundId], references: [id])
+  attempt        Attempt        @relation(fields: [attemptId], references: [id])
+  challengeRound ChallengeRound @relation(fields: [challengeRoundId], references: [id])
 
   @@unique([attemptId, roundNumber])
 }
 
 model Streak {
-  userId             String   @id
-  currentStreak      Int      @default(0)
-  longestStreak      Int      @default(0)
-  lastCompletedDate  DateTime? @db.Date
+  userId            String    @id
+  currentStreak     Int       @default(0)
+  longestStreak     Int       @default(0)
+  lastCompletedDate DateTime? @db.Date
 
-  user               User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Achievement {
-  id          String   @id @default(cuid())
-  key         String   @unique
+  id          String @id @default(cuid())
+  key         String @unique
   name        String
   description String
 
-  users       UserAchievement[]
+  users UserAchievement[]
+}
+
+model LeaderboardSnapshot {
+  id            String                     @id @default(cuid())
+  challengeDate DateTime                   @db.Date
+  scope         String
+  createdAt     DateTime                   @default(now())
+  entries       LeaderboardSnapshotEntry[]
+
+  @@unique([challengeDate, scope])
+}
+
+model LeaderboardSnapshotEntry {
+  id         String              @id @default(cuid())
+  snapshotId String
+  userId     String
+  rank       Int
+  score      Int
+  errorMs    Int
+  snapshot   LeaderboardSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([snapshotId, userId])
+  @@index([snapshotId, rank])
+}
+
+model PracticeSession {
+  id          String    @id @default(cuid())
+  userId      String
+  rounds      Int
+  targets     Json
+  scores      Json?
+  totalScore  Int       @default(0)
+  status      String    @default("IN_PROGRESS")
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model Challenge {
+  id              String                 @id @default(cuid())
+  creatorId       String
+  inviteToken     String                 @unique @default(cuid())
+  rounds          Int
+  maxPlayers      Int?
+  status          String                 @default("OPEN")
+  createdAt       DateTime               @default(now())
+  creator         User                   @relation("ChallengeCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  challengeRounds ChallengeGameRound[]
+  participants    ChallengeParticipant[]
+
+  @@index([creatorId, createdAt])
+}
+
+model ChallengeGameRound {
+  id          String    @id @default(cuid())
+  challengeId String
+  roundNumber Int
+  targetMs    Int
+  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@unique([challengeId, roundNumber])
+}
+
+model ChallengeParticipant {
+  id          String    @id @default(cuid())
+  challengeId String
+  userId      String
+  joinedAt    DateTime  @default(now())
+  scores      Json?
+  totalScore  Int       @default(0)
+  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([challengeId, userId])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  body      String
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt, createdAt])
+}
+
+model ScoreLike {
+  id          String   @id @default(cuid())
+  userId      String
+  scoreUserId String
+  context     String
+  contextId   String
+  createdAt   DateTime @default(now())
+  user        User     @relation("ScoreLikesGiven", fields: [userId], references: [id], onDelete: Cascade)
+  scoreUser   User     @relation("ScoreLikesReceived", fields: [scoreUserId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, scoreUserId, context, contextId])
+  @@index([scoreUserId, context, contextId])
 }
 
 model UserAchievement {
@@ -140,8 +280,8 @@ model UserAchievement {
   achievementId String
   earnedAt      DateTime @default(now())
 
-  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
 
   @@id([userId, achievementId])
 }

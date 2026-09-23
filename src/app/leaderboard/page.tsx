@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth/AuthContext";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Globe2, Users } from "lucide-react";
+import { ArrowLeft, Globe2, Users, Heart, UserPlus } from "lucide-react";
 
 interface LeaderboardEntry {
   rank: number;
@@ -13,20 +13,26 @@ interface LeaderboardEntry {
   username: string;
   score: number;
   errorMs: number;
+  likes: number;
+  liked: boolean;
+  relationship: string;
 }
 
 export default function LeaderboardPage() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [scope, setScope] = useState<"global" | "friends">("global");
+  const [date, setDate] = useState<"today" | "yesterday">("today");
+  const [challengeId, setChallengeId] = useState("");
   const { user } = useAuth();
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
-        const res = await fetch(`/api/leaderboard/${scope}`);
+        const res = await fetch(`/api/leaderboard/${scope}${date === "yesterday" ? "?date=yesterday" : ""}`);
         const data = await res.json();
         setEntries(data.leaderboard || []);
+        setChallengeId(data.challengeId || "");
       } catch (err) {
         console.error("Failed to load leaderboard");
       } finally {
@@ -34,7 +40,19 @@ export default function LeaderboardPage() {
       }
     };
     fetchLeaderboard();
-  }, [scope]);
+  }, [scope, date]);
+
+  const toggleLike = async (entry: LeaderboardEntry) => {
+    const liked = !entry.liked;
+    setEntries((items) => items.map((item) => item.userId === entry.userId ? { ...item, liked, likes: item.likes + (liked ? 1 : -1) } : item));
+    const response = await fetch("/api/leaderboard/like", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ scoreUserId: entry.userId, context: scope === "global" ? "DAILY_GLOBAL" : "DAILY_FRIENDS", contextId: challengeId, liked }) });
+    if (!response.ok) setEntries((items) => items.map((item) => item.userId === entry.userId ? entry : item));
+  };
+
+  const requestFriend = async (entry: LeaderboardEntry) => {
+    const response = await fetch("/api/friends/request", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username: entry.username }) });
+    if (response.ok) setEntries((items) => items.map((item) => item.userId === entry.userId ? { ...item, relationship: "PENDING" } : item));
+  };
 
   if (loading) {
     return <div className="flex h-screen items-center justify-center">Loading...</div>;
@@ -50,6 +68,7 @@ export default function LeaderboardPage() {
         <div className="flex rounded-xl border border-border/60 bg-card p-1">
           <Button size="sm" variant={scope === "global" ? "default" : "ghost"} onClick={() => setScope("global")}><Globe2 size={15} /> Global</Button>
           <Button size="sm" variant={scope === "friends" ? "default" : "ghost"} onClick={() => setScope("friends")}><Users size={15} /> Friends</Button>
+          <Button size="sm" variant={date === "yesterday" ? "default" : "ghost"} onClick={() => setDate(date === "today" ? "yesterday" : "today")}>{date === "today" ? "Yesterday" : "Today"}</Button>
         </div>
       </div>
 
@@ -90,6 +109,7 @@ export default function LeaderboardPage() {
                     <div className="col-span-4 text-right">
                       <div className="text-lg">{entry.score}</div>
                       <div className="text-xs text-muted-foreground">{(entry.errorMs / 1000).toFixed(3)}s err</div>
+                      <div className="mt-2 flex justify-end gap-2"><button aria-label={`Like ${entry.username}'s score`} onClick={() => void toggleLike(entry)} className={entry.liked ? "text-rose-400" : "text-muted-foreground"}><Heart size={16} fill={entry.liked ? "currentColor" : "none"} /> <span className="text-xs">{entry.likes}</span></button>{!isCurrentUser && <button onClick={() => void requestFriend(entry)} disabled={entry.relationship !== "NONE"} className="text-xs text-primary disabled:text-muted-foreground" title={entry.relationship === "ACCEPTED" ? "Already connected" : entry.relationship === "PENDING" ? "Request pending" : "Send friend request"}>{entry.relationship === "ACCEPTED" ? "Connected" : entry.relationship === "PENDING" ? "Pending" : <UserPlus size={16} />}</button>}</div>
                     </div>
                   </div>
                 );

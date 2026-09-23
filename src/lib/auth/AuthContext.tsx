@@ -11,6 +11,10 @@ interface User {
   isAdmin: boolean;
   createdAt: string;
   streak: { currentStreak: number; longestStreak: number } | null;
+  email: string | null;
+  emailVerifiedAt: string | null;
+  webNotifications: boolean;
+  bestScore: number;
 }
 
 interface AuthContextType {
@@ -29,7 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchUser = async () => {
     try {
-      const res = await fetch("/api/me");
+      const res = await fetch("/api/me", { credentials: "include", cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
         setUser(data.user);
@@ -49,7 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
+    await fetch("/api/auth/logout", { method: "POST", credentials: "include", cache: "no-store" });
     setUser(null);
     router.push("/login");
   };

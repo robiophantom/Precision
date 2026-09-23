@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { ChevronDown, Flame, HelpCircle, Target, Timer, Trophy } from "lucide-react";
-import { SCORING_EXAMPLES, ROUND_COUNT } from "@/domain/game/scoring";
+import { SCORING_EXAMPLES } from "@/domain/game/scoring";
 
 export function DailyChallengeController() {
   const { user } = useAuth();
@@ -145,14 +145,14 @@ export function DailyChallengeController() {
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-8 w-full max-w-md mx-auto text-center px-4">
         <div className="space-y-2 animate-reveal-up">
           <h1 className="text-4xl font-bold tracking-tighter">Today&apos;s Challenge</h1>
-          <p className="text-muted-foreground">5 rounds. 1 attempt. Perfect precision.</p>
+          <p className="text-muted-foreground">{challenge.rounds.length} rounds. 1 attempt. Perfect precision.</p>
         </div>
         
         <Card className="glass-panel w-full animate-reveal-up [animation-delay:120ms]">
           <CardContent className="p-6 space-y-4">
             <div className="flex justify-between items-center text-sm">
               <span className="text-muted-foreground">Rounds</span>
-              <span className="font-bold">{ROUND_COUNT}</span>
+              <span className="font-bold">{challenge.rounds.length}</span>
             </div>
             <div className="flex justify-between items-center text-sm">
               <span className="text-muted-foreground">Max Score</span>
@@ -186,7 +186,7 @@ export function DailyChallengeController() {
             <CardContent className="grid gap-4 border-t border-yellow-100/10 pt-5 text-left sm:grid-cols-2">
               <div className="space-y-3">
                 <p className="flex gap-3"><Timer className="mt-0.5 text-orange-300" size={18} /><span><strong>Start</strong> when you are ready, then stop when your internal clock reaches the target.</span></p>
-                <p className="flex gap-3"><Target className="mt-0.5 text-yellow-300" size={18} /><span>There are <strong>{ROUND_COUNT} rounds</strong>. You get one competitive attempt each day.</span></p>
+                <p className="flex gap-3"><Target className="mt-0.5 text-yellow-300" size={18} /><span>There are <strong>{challenge.rounds.length} rounds</strong>. You get one competitive attempt each day.</span></p>
                 <p className="flex gap-3"><Trophy className="mt-0.5 text-orange-300" size={18} /><span>Your total can reach <strong>5,000 points</strong> and verified scores enter the leaderboard.</span></p>
                 <div className="rounded-xl border border-yellow-200/10 bg-yellow-200/5 p-3 text-sm text-yellow-50/85">
                   <strong className="text-yellow-100">The simple rule:</strong> the closer you stop to the target, the more points you earn. Being early or late by the same amount gives the same score.
@@ -204,7 +204,7 @@ export function DailyChallengeController() {
                       <span className="font-semibold">{example.score} pts</span>
                     </div>
                   ))}
-                  <p className="pt-2 text-xs text-muted-foreground">Each round is worth up to 1,000 points. Add all {ROUND_COUNT} rounds for a maximum of 5,000.</p>
+                  <p className="pt-2 text-xs text-muted-foreground">Each round is worth up to 1,000 points. Add all {challenge.rounds.length} rounds for a maximum of {challenge.rounds.length * 1000}.</p>
                 </div>
               </div>
             </CardContent>

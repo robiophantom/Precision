@@ -29,8 +29,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Attempt is already completed" }, { status: 400 });
     }
 
-    if (attempt.roundAttempts.length !== 5) {
-      return NextResponse.json({ error: "Cannot complete without 5 rounds" }, { status: 400 });
+    const expectedRounds = await prisma.challengeRound.count({ where: { challengeId: attempt.challengeId } });
+    if (attempt.roundAttempts.length !== expectedRounds) {
+      return NextResponse.json({ error: `Cannot complete without ${expectedRounds} rounds` }, { status: 400 });
     }
 
     const totalScore = attempt.roundAttempts.reduce((sum, r) => sum + r.score, 0);
