@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Eye, EyeOff } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
@@ -9,6 +10,7 @@ function AddEmailForm() {
   const params = useSearchParams();
   const [identifier, setIdentifier] = useState(params.get("identifier") ?? "");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [sent, setSent] = useState(false);
@@ -56,7 +58,12 @@ function AddEmailForm() {
         <h1 className="text-3xl font-black">Add or verify Gmail</h1>
         <p className="text-sm text-muted-foreground">Use your existing username and password, then add a Gmail address before playing.</p>
         <input className="w-full rounded-md border bg-transparent p-3" required placeholder="Username" value={identifier} onChange={(event) => setIdentifier(event.target.value)} />
-        <input className="w-full rounded-md border bg-transparent p-3" type="password" required placeholder="Current password" value={password} onChange={(event) => setPassword(event.target.value)} />
+        <div className="relative">
+          <input className="w-full rounded-md border bg-transparent p-3 pr-11" type={showPassword ? "text" : "password"} required placeholder="Current password" value={password} onChange={(event) => setPassword(event.target.value)} />
+          <button type="button" aria-label={showPassword ? "Hide password" : "Show password"} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" onClick={() => setShowPassword((visible) => !visible)}>
+            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
+        </div>
         <input className="w-full rounded-md border bg-transparent p-3" type="email" required placeholder="Gmail address" value={email} onChange={(event) => setEmail(event.target.value)} />
         <button disabled={loading} className="w-full rounded-md bg-primary p-3 text-primary-foreground">{loading ? "Sending..." : "Add Gmail and send verification"}</button>
         {sent && (

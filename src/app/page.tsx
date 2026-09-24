@@ -6,7 +6,7 @@ import { DailyChallengeController } from "@/components/game/DailyChallengeContro
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Trophy, Users, UserCircle, Swords, Dumbbell } from "lucide-react";
+import { Trophy, Users, UserCircle, Swords, Dumbbell, Flame, History } from "lucide-react";
 
 export default function Home() {
   const { user, loading } = useAuth();
@@ -44,8 +44,8 @@ export default function Home() {
             <div className="hidden text-sm font-medium sm:block">{user.username}</div>
 
             {user.streak && user.streak.currentStreak > 0 && (
-              <div className="text-xs font-bold text-orange-500 sm:text-sm">
-                🔥 {user.streak.currentStreak}
+              <div title={`${user.streak.currentStreak} day streak`} className="inline-flex items-center gap-1 rounded-full border border-orange-300/40 bg-gradient-to-r from-orange-500/20 via-yellow-300/15 to-fuchsia-400/20 px-2 py-1 text-xs font-black text-orange-200 shadow-[0_0_18px_rgba(251,146,60,0.35)] sm:text-sm">
+                <Flame size={15} className="animate-ember-pulse fill-orange-400 text-yellow-200" /> {user.streak.currentStreak} <span aria-hidden="true">✦</span>
               </div>
             )}
 
@@ -54,7 +54,7 @@ export default function Home() {
             <Link href="/practice" className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground sm:text-sm"><Dumbbell size={15} /> Practice</Link>
             <Link href="/profile" className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground sm:text-sm"><UserCircle size={15} /> Profile</Link>
             <Link href="/challenge/new" className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground sm:text-sm"><Swords size={15} /> Challenge</Link>
-            <Link href="/challenge/history" className="hidden text-xs text-muted-foreground hover:text-foreground sm:block sm:text-sm">History</Link>
+            <Link href="/challenge/history" aria-label="History" className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground sm:text-sm"><History size={15} /> History</Link>
             <Button
               variant="ghost"
               className="px-2 sm:px-4"

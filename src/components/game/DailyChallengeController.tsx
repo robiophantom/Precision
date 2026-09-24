@@ -72,7 +72,8 @@ export function DailyChallengeController() {
   };
 
   const handleShare = async () => {
-    const text = `I scored ${finalScore}/5000 on today's Precision challenge. Can you beat me?\n\nPlay at: ${window.location.origin}`;
+    const maxScore = challenge?.rounds.length ? challenge.rounds.length * 1000 : 0;
+    const text = `I scored ${finalScore}/${maxScore} on today's Precision challenge. Can you beat me?\n\nPlay at: ${window.location.origin}`;
     
     if (navigator.share) {
       try {
@@ -121,7 +122,7 @@ export function DailyChallengeController() {
         <CardContent className="space-y-6 text-center">
           <div>
             <div className="text-sm text-muted-foreground mb-1 uppercase tracking-widest">Total Score</div>
-            <div className="text-6xl font-black text-primary">{finalScore} <span className="text-xl text-muted-foreground font-normal">/ 5000</span></div>
+            <div className="text-6xl font-black text-primary">{finalScore} <span className="text-xl text-muted-foreground font-normal">/ {challenge.rounds.length * 1000}</span></div>
           </div>
           <div>
             <div className="text-sm text-muted-foreground mb-1 uppercase tracking-widest">Total Error</div>

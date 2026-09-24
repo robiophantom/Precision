@@ -10,16 +10,21 @@ export async function POST(req: Request) {
   if (!session) return NextResponse.json({ error: "Sign in to react to scores." }, { status: 401 });
   try {
     const { liked, scoreUserId, context, contextId } = input.parse(await req.json());
-    const where = { userId: session.userId, scoreUserId, context, contextId };
-    if (liked) {
-      await prisma.scoreLike.upsert({
-        where: { userId_scoreUserId_context_contextId: where },
-        create: where,
-        update: {},
-      });
-    } else {
-      await prisma.scoreLike.deleteMany({ where });
-    }
+    const contexts = ["DAILY_GLOBAL", "DAILY_FRIENDS"] as const;
+    await prisma.$transaction(async (tx) => {
+      for (const likeContext of contexts) {
+        const where = { userId: session.userId, scoreUserId, context: likeContext, contextId };
+        if (liked) {
+          await tx.scoreLike.upsert({
+            where: { userId_scoreUserId_context_contextId: where },
+            create: where,
+            update: {},
+          });
+        } else {
+          await tx.scoreLike.deleteMany({ where });
+        }
+      }
+    });
     return NextResponse.json({
       likes: await prisma.scoreLike.count({ where: { scoreUserId, context, contextId } }),
       liked,

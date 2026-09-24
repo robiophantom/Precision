@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
@@ -81,13 +81,9 @@ export function GameEngine({ challenge, attemptId, initialRoundIndex = 0, onComp
       const data = await res.json();
       if (!res.ok) {
         toast.error(data.error || "Failed to submit round");
-        setLastResult(null);
-        setGameState("READY");
       }
       } catch {
         toast.error("Network error");
-        setLastResult(null);
-        setGameState("READY");
       } finally {
         setLoading(false);
       }
@@ -163,7 +159,7 @@ export function GameEngine({ challenge, attemptId, initialRoundIndex = 0, onComp
             <Button 
               onClick={handleStop} 
               variant="destructive"
-              className="w-full h-40 text-3xl font-bold rounded-3xl shadow-[0_0_50px_rgba(255,76,0,0.55)] animate-ember-pulse"
+              className="w-full h-40 text-3xl font-bold rounded-3xl shadow-[0_0_35px_rgba(255,76,0,0.4)] transition-transform duration-100 active:scale-[0.98] [touch-action:manipulation]"
             >
               STOP
             </Button>
@@ -204,7 +200,7 @@ export function GameEngine({ challenge, attemptId, initialRoundIndex = 0, onComp
             </Card>
 
             <Button onClick={handleNext} className="w-full h-14 text-lg" disabled={loading}>
-              {loading ? "SAVING..." : currentRoundIndex === 4 ? "VIEW FINAL RESULT" : "CONTINUE"}
+              {loading ? "SAVING..." : currentRoundIndex === challenge.rounds.length - 1 ? "VIEW FINAL RESULT" : "CONTINUE"}
             </Button>
           </motion.div>
         )}
