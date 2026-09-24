@@ -156,7 +156,7 @@ export function DailyChallengeController() {
             </div>
             <div className="flex justify-between items-center text-sm">
               <span className="text-muted-foreground">Max Score</span>
-              <span className="font-bold">5000</span>
+              <span className="font-bold">{challenge.rounds.length*1000}</span>
             </div>
             <div className="flex justify-between items-center text-sm">
               <span className="text-muted-foreground">Attempts Allowed</span>
